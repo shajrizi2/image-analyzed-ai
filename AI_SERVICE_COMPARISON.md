@@ -66,6 +66,8 @@ This document compares AI services for image analysis to determine the best opti
 - Limited customization options
 - Smaller developer community
 
+**Note:** Azure Computer Vision was initially considered but **not implemented due to account setup issues**. The Azure account verification process proved to be a blocker during development.
+
 **Pricing (as of 2024):**
 
 - Free tier: 5,000 transactions/month
