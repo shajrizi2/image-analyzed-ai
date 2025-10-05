@@ -102,4 +102,57 @@ export const metadataRouter = router({
       if (error) throw new Error(error.message);
       return data;
     }),
+
+  findSimilar: protectedProcedure
+    .input(z.object({ imageId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      // First, get the metadata of the target image
+      const { data: targetMetadata, error: metadataError } = await ctx.supabase
+        .from("image_metadata")
+        .select("tags, colors")
+        .eq("image_id", input.imageId)
+        .eq("user_id", ctx.user?.id)
+        .single();
+
+      if (metadataError) throw new Error(metadataError.message);
+      if (!targetMetadata) return { images: [] };
+
+      const { tags, colors } = targetMetadata;
+
+      // If no tags or colors, return empty
+      if ((!tags || tags.length === 0) && (!colors || colors.length === 0)) {
+        return { images: [] };
+      }
+
+      // Find similar images using array overlap operator
+      const { data: similarMetadata, error: similarError } = await ctx.supabase
+        .from("image_metadata")
+        .select("image_id")
+        .eq("user_id", ctx.user?.id)
+        .neq("image_id", input.imageId)
+        .or(`tags.ov.{${tags?.join(",") || ""}},colors.ov.{${colors?.join(",") || ""}}`);
+
+      if (similarError) {
+        console.error("Similar search error:", similarError);
+        return { images: [] };
+      }
+
+      if (!similarMetadata || similarMetadata.length === 0) {
+        return { images: [] };
+      }
+
+      // Get full image data for the similar images
+      const imageIds = similarMetadata.map((m) => m.image_id);
+      const { data: images, error: imagesError } = await ctx.supabase
+        .from("images")
+        .select("*, image_metadata(*)")
+        .in("id", imageIds)
+        .limit(12);
+
+      if (imagesError) throw new Error(imagesError.message);
+
+      return {
+        images: images?.map((img) => transformImageWithUrls(ctx.supabase, img)) || [],
+      };
+    }),
 });

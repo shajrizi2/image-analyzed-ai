@@ -109,7 +109,7 @@ export default function SearchBar() {
             placeholder="Search by tags or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           />
           <button
@@ -143,8 +143,8 @@ export default function SearchBar() {
           <div className="flex space-x-2">
             <input
               type="color"
-              value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
+              value={selectedColor || "#000000"}
+              onChange={(e) => setSelectedColor(e.target.value.toUpperCase())}
               className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
             />
             <button

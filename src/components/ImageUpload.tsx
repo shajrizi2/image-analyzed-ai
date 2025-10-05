@@ -13,7 +13,7 @@ interface UploadProgress {
 }
 
 interface ImageUploadProps {
-  onUploadComplete?: (imageId: number) => void;
+  onUploadComplete?: (image: any) => void;
 }
 
 export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
@@ -135,11 +135,14 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
           const result = await refetch();
           if (result.data?.images) {
             setImages(result.data.images);
-          }
-
-          // Auto-open modal with the newly uploaded image
-          if (onUploadComplete) {
-            onUploadComplete(imageData.id);
+            
+            // Find the newly uploaded image in the refreshed data
+            const uploadedImage = result.data.images.find((img: any) => img.id === imageData.id);
+            
+            // Auto-open modal with the newly uploaded image
+            if (onUploadComplete && uploadedImage) {
+              onUploadComplete(uploadedImage);
+            }
           }
 
           // Show success toast
@@ -150,6 +153,13 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
               message: `${file.name} uploaded and analyzed successfully`,
             });
           }
+
+          // Auto-remove progress bar after 2 seconds
+          setTimeout(() => {
+            setUploadProgress((prev) =>
+              prev.filter((_, index) => index !== uploadIndex)
+            );
+          }, 2000);
         } catch (error) {
           console.error("Upload error:", error);
           setUploadProgress((prev) =>
@@ -223,8 +233,11 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
 
       const result = await response.json();
       console.log("AI processing result:", result);
+
+      return result;
     } catch (error) {
       console.error("AI processing error:", error);
+      throw error;
     }
   };
 

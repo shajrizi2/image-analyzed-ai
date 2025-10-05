@@ -57,4 +57,41 @@ export const uploadRouter = router({
       if (error) throw new Error(error.message);
       return data;
     }),
+
+  deleteImage: protectedProcedure
+    .input(z.object({ imageId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // First, get the image data to get file paths
+      const { data: image, error: fetchError } = await ctx.supabase
+        .from("images")
+        .select("original_path, thumbnail_path, user_id")
+        .eq("id", input.imageId)
+        .eq("user_id", ctx.user?.id)
+        .single();
+
+      if (fetchError) throw new Error(fetchError.message);
+      if (!image) throw new Error("Image not found or unauthorized");
+
+      // Delete files from storage
+      const filesToDelete = [image.original_path, image.thumbnail_path];
+      const { error: storageError } = await ctx.supabase.storage
+        .from("images")
+        .remove(filesToDelete);
+
+      if (storageError) {
+        console.error("Storage deletion error:", storageError);
+        // Continue with database deletion even if storage fails
+      }
+
+      // Delete from database (cascade will delete metadata)
+      const { error: deleteError } = await ctx.supabase
+        .from("images")
+        .delete()
+        .eq("id", input.imageId)
+        .eq("user_id", ctx.user?.id);
+
+      if (deleteError) throw new Error(deleteError.message);
+
+      return { success: true, imageId: input.imageId };
+    }),
 });

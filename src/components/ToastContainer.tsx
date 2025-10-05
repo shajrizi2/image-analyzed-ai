@@ -78,7 +78,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
 
   return (
     <div
-      className={`max-w-sm w-full border rounded-lg shadow-lg pointer-events-auto ${
+      className={`max-w-lg w-full border rounded-lg shadow-lg pointer-events-auto ${
         typeStyles[toast.type]
       }`}
     >
